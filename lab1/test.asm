@@ -84,9 +84,56 @@ fin:
     li a0,10
     ecall
 # 2-a) 
+        .data
+base:   .byte   3,5,2,7,0,0,0   # ejemplo: 53 (unidad=3,decena=5) + 72 (unidad=2,decena=7)
+
+.text
+.globl  main
+main:
+    la    x1,base
+    li    x10,10             # constante 10, reutilizada para ambas conversiones
+
+    # --- convertir primer número (base, base+1) ---
+    lbu   x2,0(x1)           # x2 = unidad
+    lbu   x3,1(x1)           # x3 = decena
+    mul   x5,x3,x10          # x5 = decena*10
+    add   x5,x5,x2           # x5 = decena*10 + unidad = número1 en binario
+    sb    x5,4(x1)           # guarda en base+4
+
+    # --- convertir segundo número (base+2, base+3) ---
+    lbu   x2,2(x1)
+    lbu   x3,3(x1)
+    mul   x6,x3,x10
+    add   x6,x6,x2
+    sb    x6,5(x1)           # guarda en base+5
+
+    # --- sumar los dos números ya convertidos ---
+    add   x7,x5,x6           # x7 = número1 + número2
+    sb    x7,6(x1)           # guarda en base+6
+
+    li    a0,10
+    ecall    
+
+# 3
 .data
-base: .byte 2,3 # el primer y segundo digito respectivamente
-espacio: .space 5 # guardo para reservar hasta base + 6 +1
-tabla:  .byte 0xFC,0x60,0xDA,0xF2,0x66
-        .byte 0xB6,0xBE,0xE0,0xFE,0xF6
-        
+base: .byte 1,2,0,3,4 # R1,I1,relleno,R2,I2
+resultado: .space 2 # 2 bytes para el real y el imaginario
+.text
+.globl main
+main:
+    la x1,base # cargo la direccion del primer elemento
+    lb x2,0(x1) # cargo R1
+    lb x3,3(x1) # cargo R2
+    lb x4,4(x1) # cargo I2
+    mul x5,x2,x3 # R1*R2
+    mul x2,x2,x4 # R1*I2
+    lb x6,1(x1) # cargo I1
+    mul x4,x4,x6 # I1*I2
+    mul x6,x6,x3 # I1*R2
+    add x6,x6,x2
+    la x1,resultado
+    sb x6,1(x1)
+    sub x5,x5,x4
+    sb x5,0(x1)
+    li a0,10
+    ecall
